@@ -1,11 +1,11 @@
 from collections import defaultdict
 import random
 
-# Подключаем данные из файлов input и exercises
 from exercises import exercises
 from input import min_exercises_per_day
 from input import max_exercises_per_day
 from input import weekly_muscle_group_goals
+
 
 # Распределение упражнений по группам мышц
 muscle_groups = defaultdict(list)
@@ -26,7 +26,6 @@ def distribute_exercises():
     remaining_exercises = {group: random.sample(ex_list, k=weekly_muscle_group_goals[group])
                            for group, ex_list in muscle_groups.items() if group != "Кардио"}
 
-    day_index = 0
     while any(remaining_exercises.values()):
         day_exercises = []
 
@@ -38,26 +37,17 @@ def distribute_exercises():
                 day_exercises.append(exercises.pop())
 
         if day_exercises:
-            # Проверка на максимальное количество упражнений в день
-            if len(day_exercises) + len(schedule[days_of_week[day_index]]) > max_exercises_per_day:
-                continue
-
-            # Проверка, что нет дней с одним упражнением
-            if len(day_exercises) == 1 and len(schedule[days_of_week[day_index]]) > 0:
-                # Найти день, куда можно перенести упражнение
-                for day in days_of_week:
-                    if len(schedule[day]) >= min_exercises_per_day and len(schedule[day]) < max_exercises_per_day:
-                        schedule[day].extend(day_exercises)
-                        break
-            else:
-                schedule[days_of_week[day_index]].extend(day_exercises)
-                day_index = (day_index + 1) % len(days_of_week)
+            available_days = [day for day in days_of_week if len(schedule[day]) + len(day_exercises) <= max_exercises_per_day]
+            if available_days:
+                chosen_day = random.choice(available_days)
+                schedule[chosen_day].extend(day_exercises)
 
     # Проверка на минимальное количество упражнений в день и добавление кардио
     for day in days_of_week:
-        if len(schedule[day]) > 0 and len(schedule[day]) < min_exercises_per_day:
+        if 0 < len(schedule[day]) < min_exercises_per_day:
             schedule[day].append(random.choice(muscle_groups["Кардио"]))
 
+# Вызов функции распределения упражнений
 distribute_exercises()
 
 # Вывод расписания тренировок
