@@ -1,6 +1,7 @@
 from collections import defaultdict
 import random
 
+# Подключаем данные из файлов input и exercises
 from exercises import exercises
 from input import min_exercises_per_day
 from input import max_exercises_per_day
