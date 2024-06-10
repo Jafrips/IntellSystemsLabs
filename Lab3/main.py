@@ -1,6 +1,7 @@
+import time
 import random
 from exercises import exercises
-from input import min_exercises_per_day, max_exercises_per_day, weekly_exercise_plan
+from input import min_exercises_per_day, max_exercises_per_day, weekly_exercise_plan, generations, pop_size
 
 # Проверка наличия ключей в exercises
 def check_exercises_keys(muscle_groups):
@@ -24,17 +25,38 @@ def fitness(days):
 def create_initial_population(pop_size, muscle_groups):
     check_exercises_keys(muscle_groups)
     population = []
+    
+    # Создаем список упражнений, которые нужно выполнить в два дня
+    exercises_twice = []
+    for muscle_group in muscle_groups:
+        num_exercises = weekly_exercise_plan[muscle_group]
+        if num_exercises == 2:
+            for _ in range(2):
+                exercises_twice.append(muscle_group)
+    
     for _ in range(pop_size):
         days = {i: [] for i in range(1, 8)}
         for muscle_group in muscle_groups:
             exercises_for_group = exercises[muscle_group]
             num_exercises = weekly_exercise_plan[muscle_group]
-            for _ in range(num_exercises):
+            if num_exercises != 2:
+                # Распределяем упражнения по остальным дням
+                for _ in range(num_exercises):
+                    while True:
+                        day = random.choice(list(days.keys()))
+                        if len(days[day]) < max_exercises_per_day:
+                            days[day].append(random.choice(exercises_for_group))
+                            break
+        
+        # Распределяем упражнения, которые должны быть в два дня
+        for muscle_group in exercises_twice:
+            for _ in range(2):
                 while True:
                     day = random.choice(list(days.keys()))
                     if len(days[day]) < max_exercises_per_day:
-                        days[day].append(random.choice(exercises_for_group))
+                        days[day].append(random.choice(exercises[muscle_group]))
                         break
+
         # Проверка и корректировка количества упражнений в каждом дне
         for day in days:
             while 0 < len(days[day]) < min_exercises_per_day:
@@ -72,7 +94,17 @@ def mutate(days, mutation_rate=0.1):
                 new_exercise = random.choice(exercises[muscle_group])
                 if new_exercise not in days[day]:
                     days[day].append(new_exercise)
+            # Перенос упражнений, если это поможет соблюсти условия по количеству упражнений в день
+            for other_day in days.keys():
+                if other_day != day:
+                    while len(days[other_day]) > min_exercises_per_day:
+                        exercise_to_move = random.choice(days[other_day])
+                        if len(days[day]) < max_exercises_per_day:
+                            days[day].append(exercise_to_move)
+                            days[other_day].remove(exercise_to_move)
     return days
+
+
 
 # Проверка количества упражнений на каждую группу мышц за неделю
 def validate_exercise_plan(days):
@@ -125,8 +157,7 @@ def count_exercises_per_muscle_group(days):
     return muscle_group_counts
 
 def main():
-    pop_size = 10  # размер популяции
-    generations = 50  # количество поколений
+    
     muscle_groups = list(weekly_exercise_plan.keys())
 
     # Инициализация популяции
@@ -172,4 +203,11 @@ def main():
     #    print(f"{muscle_group}: {count}")
 
 if __name__ == "__main__":
+    print("Заданный размер популяции: ", pop_size)
+    print("Заданное количество поколений: ", generations, "\nГенерация...")
+
+    start_time = time.time()
+
     main()
+
+    print("--- %s seconds ---" % (time.time() - start_time))
