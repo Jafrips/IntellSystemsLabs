@@ -138,11 +138,11 @@ def add_cardio_exercises(days):
                 days[day].append(cardio_exercise)
     return days
 
-# Перераспределение упражнений из дней с одним упражнением
-def redistribute_single_exercise_days(days):
+def redistribute_exercise_days(days):
     for day in list(days.keys()):
         # Убираем из рассмотрения кардио упражнения
         non_cardio_exs = [ex for ex in days[day] if ex not in cardio_exercises]
+        
         if len(non_cardio_exs) == 1:
             exercise_to_move = non_cardio_exs[0]
             days[day].remove(exercise_to_move)
@@ -150,6 +150,15 @@ def redistribute_single_exercise_days(days):
                 if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and exercise_to_move not in days[target_day]:
                     days[target_day].append(exercise_to_move)
                     break
+
+        if len(non_cardio_exs) < min_exercises_per_day and len(non_cardio_exs) > 1:
+            for ex_toMove in non_cardio_exs:
+                days[day].remove(ex_toMove)
+                for target_day in days.keys():
+                    if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and ex_toMove not in days[target_day]:
+                        days[target_day].append(ex_toMove)
+                        break
+
     return days
 
 def main():
@@ -184,11 +193,7 @@ def main():
     final_fitnesses = [fitness(individual) for individual in population]
     best_solution = population[final_fitnesses.index(max(final_fitnesses))]
 
-    # Перераспределение упражнений из дней с одним упражнением
-    #best_solution = redistribute_exercises(best_solution)
-
-    # Перераспределение упражнений из дней с одним упражнением без учета кардио
-    best_solution = redistribute_single_exercise_days(best_solution)
+    best_solution = redistribute_exercise_days(best_solution)
     
     # Добавление кардио-упражнений в дни с недостаточным количеством упражнений
     best_solution = add_cardio_exercises(best_solution)    
