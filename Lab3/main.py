@@ -140,8 +140,17 @@ def add_cardio_exercises(days):
 
 def redistribute_exercise_days(days):
     for day in list(days.keys()):
+        
         # Убираем из рассмотрения кардио упражнения
         non_cardio_exs = [ex for ex in days[day] if ex not in cardio_exercises]
+
+        if len(non_cardio_exs) < min_exercises_per_day and len(non_cardio_exs) > 1:
+            for ex_toMove in non_cardio_exs:
+                for target_day in days.keys():
+                    if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and ex_toMove not in days[target_day]:
+                        days[target_day].append(ex_toMove)
+                        days[day].remove(ex_toMove)
+                        break
         
         if len(non_cardio_exs) == 1:
             exercise_to_move = non_cardio_exs[0]
@@ -150,14 +159,6 @@ def redistribute_exercise_days(days):
                 if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and exercise_to_move not in days[target_day]:
                     days[target_day].append(exercise_to_move)
                     break
-
-        if len(non_cardio_exs) < min_exercises_per_day and len(non_cardio_exs) > 1:
-            for ex_toMove in non_cardio_exs:
-                days[day].remove(ex_toMove)
-                for target_day in days.keys():
-                    if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and ex_toMove not in days[target_day]:
-                        days[target_day].append(ex_toMove)
-                        break
 
     return days
 
