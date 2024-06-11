@@ -139,12 +139,15 @@ def add_cardio_exercises(days):
     return days
 
 # Перераспределение упражнений из дней с одним упражнением
-def redistribute_exercises(days):
+def redistribute_single_exercise_days(days):
     for day in list(days.keys()):
-        if len(days[day]) == 1:
-            exercise_to_move = days[day].pop(0)
+        # Убираем из рассмотрения кардио упражнения
+        non_cardio_exs = [ex for ex in days[day] if ex not in cardio_exercises]
+        if len(non_cardio_exs) == 1:
+            exercise_to_move = non_cardio_exs[0]
+            days[day].remove(exercise_to_move)
             for target_day in days.keys():
-                if len(days[target_day]) < max_exercises_per_day:
+                if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and exercise_to_move not in days[target_day]:
                     days[target_day].append(exercise_to_move)
                     break
     return days
@@ -182,7 +185,10 @@ def main():
     best_solution = population[final_fitnesses.index(max(final_fitnesses))]
 
     # Перераспределение упражнений из дней с одним упражнением
-    best_solution = redistribute_exercises(best_solution)
+    #best_solution = redistribute_exercises(best_solution)
+
+    # Перераспределение упражнений из дней с одним упражнением без учета кардио
+    best_solution = redistribute_single_exercise_days(best_solution)
     
     # Добавление кардио-упражнений в дни с недостаточным количеством упражнений
     best_solution = add_cardio_exercises(best_solution)    
@@ -190,9 +196,18 @@ def main():
     # Вывод результата
     for day, exs in best_solution.items():
         if exs:
-            print(f"Day {day}: {', '.join(exs)}")
+
+            # подсчет кол-ва упражнений в день без учета кардио упражнений
+            ExCount = 0
+            for ex in exs:
+                if ex in cardio_exercises:
+                    ExCount = ExCount
+                else:
+                    ExCount += 1
+            
+            print(f"Day {day}: ({ExCount}) {', '.join(exs)}")
         else:
-            print(f"Day {day}: ", Fore.GREEN, "выходной", Fore.RESET)
+            print(f"Day {day}: {Fore.GREEN} Выходной", Fore.RESET)
 
     # Подсчет и вывод количества упражнений на каждую группу мышц за неделю
     #muscle_group_counts = count_exercises_per_muscle_group(best_solution)
