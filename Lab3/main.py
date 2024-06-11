@@ -1,4 +1,5 @@
-import random, time
+import random
+import time
 from exercises import exercises, cardio_exercises
 from input import min_exercises_per_day, max_exercises_per_day, weekly_exercise_plan
 from input import generations, pop_size
@@ -138,29 +139,19 @@ def add_cardio_exercises(days):
                 days[day].append(cardio_exercise)
     return days
 
-def redistribute_exercise_days(days):
-    for day in list(days.keys()):
-        
-        # Убираем из рассмотрения кардио упражнения
-        non_cardio_exs = [ex for ex in days[day] if ex not in cardio_exercises]
+def check_min_exercises_per_day(days):
+    for day, exercises in days.items():
+        non_cardio_exercises = [ex for ex in exercises if ex not in cardio_exercises]
+        if len(non_cardio_exercises) < min_exercises_per_day:
+            return False
+    return True
 
-        if len(non_cardio_exs) < min_exercises_per_day and len(non_cardio_exs) > 1:
-            for ex_toMove in non_cardio_exs:
-                for target_day in days.keys():
-                    if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and ex_toMove not in days[target_day]:
-                        days[target_day].append(ex_toMove)
-                        days[day].remove(ex_toMove)
-                        break
-        
-        if len(non_cardio_exs) == 1:
-            exercise_to_move = non_cardio_exs[0]
-            days[day].remove(exercise_to_move)
-            for target_day in days.keys():
-                if len(days[target_day]) < max_exercises_per_day and len(days[target_day]) > 1 and exercise_to_move not in days[target_day]:
-                    days[target_day].append(exercise_to_move)
-                    break
-
-    return days
+def check_single_exercise_days(days):
+    for day, exercises in days.items():
+        non_cardio_exercises = [ex for ex in exercises if ex not in cardio_exercises]
+        if len(non_cardio_exercises) == 1:
+            return False
+    return True
 
 def main():
     muscle_groups = list(weekly_exercise_plan.keys())
@@ -188,22 +179,21 @@ def main():
 
         # Проверка выполнения всех условий
         if all(validate_exercise_plan(individual) for individual in population):
-            break
+            best_solution = max(population, key=fitness)
+            if check_min_exercises_per_day(best_solution) and check_single_exercise_days(best_solution):
+                break
 
     # Выбор лучшего решения
     final_fitnesses = [fitness(individual) for individual in population]
     best_solution = population[final_fitnesses.index(max(final_fitnesses))]
 
-    best_solution = redistribute_exercise_days(best_solution)
-    
     # Добавление кардио-упражнений в дни с недостаточным количеством упражнений
-    best_solution = add_cardio_exercises(best_solution)    
+    best_solution = add_cardio_exercises(best_solution)
 
     # Вывод результата
     for day, exs in best_solution.items():
         if exs:
-
-            # подсчет кол-ва упражнений в день без учета кардио упражнений
+            # Подсчет количества упражнений в день без учета кардио упражнений
             ExCount = 0
             for ex in exs:
                 if ex in cardio_exercises:
@@ -215,19 +205,10 @@ def main():
         else:
             print(f"Day {day}: {Fore.GREEN} Выходной", Fore.RESET)
 
-    # Подсчет и вывод количества упражнений на каждую группу мышц за неделю
-    #muscle_group_counts = count_exercises_per_muscle_group(best_solution)
-    #print("\nКоличество упражнений на каждую группу мышц за неделю:")
-    #for muscle_group, count in muscle_group_counts.items():
-    #    print(f"{muscle_group}: {count}")
+    print("Численность популяции:", Fore.CYAN, len(population), Fore.RESET)
+    print("Количество поколений:", Fore.CYAN, generation + 1, Fore.RESET)
 
 if __name__ == "__main__":
-
-    print("Численность популяции: ", Fore.CYAN, pop_size, Fore.RESET)
-    print("Количество поколений: ", Fore.CYAN, generations, Fore.RESET)
-
     start_time = time.time()
-
     main()
-
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("Время выполнения: %s секунд" % (time.time() - start_time))
