@@ -3,6 +3,10 @@ from exercises import exercises, cardio_exercises
 from input import min_exercises_per_day, max_exercises_per_day, weekly_exercise_plan
 from input import generations, pop_size
 
+# Окрашивание элементов в консоли
+from colorama import init, Fore
+init()
+
 # Проверка наличия ключей в exercises
 def check_exercises_keys(muscle_groups):
     missing_keys = [key for key in muscle_groups if key not in exercises]
@@ -188,7 +192,7 @@ def main():
         if exs:
             print(f"Day {day}: {', '.join(exs)}")
         else:
-            print(f"Day {day}: выходной")
+            print(f"Day {day}: ", Fore.GREEN, "выходной", Fore.RESET)
 
     # Подсчет и вывод количества упражнений на каждую группу мышц за неделю
     #muscle_group_counts = count_exercises_per_muscle_group(best_solution)
@@ -198,8 +202,8 @@ def main():
 
 if __name__ == "__main__":
 
-    print("Численность популяции: ", pop_size)
-    print("Количество поколений: ", generations)
+    print("Численность популяции: ", Fore.CYAN, pop_size, Fore.RESET)
+    print("Количество поколений: ", Fore.CYAN, generations, Fore.RESET)
 
     start_time = time.time()
 
